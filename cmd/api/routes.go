@@ -13,10 +13,10 @@ func (app *application) routes() http.Handler {
 	router := httprouter.New()
 
 	// Convert httprouter.Handler to http.Handler
-	router.HandlerFunc(http.MethodGet, "/healthcheck", app.healthcheckHandler)
+	router.HandlerFunc(http.MethodGet, "api/healthcheck", app.healthcheckHandler)
 
 	// Register the expvar handler for metrics
-	router.Handler(http.MethodGet, "/debug/vars", expvar.Handler())
+	router.Handler(http.MethodGet, "api/debug/vars", expvar.Handler())
 
 	// Create a middleware chain
 	return app.recoverPanic(app.logRequest(router))
