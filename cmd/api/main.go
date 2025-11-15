@@ -28,9 +28,21 @@ type application struct {
 }
 
 func main() {
+	// Log application startup
+	log.Info("Application starting...")
+	log.InfoWithProperties("Application version", map[string]string{
+		"version": version,
+	})
+
 	// Declare an instance of the appConfig struct.
 	var cfg appConfig
 	parseFlags(&cfg)
+
+	// Log configuration
+	log.InfoWithProperties("Application configuration loaded", map[string]string{
+		"environment": cfg.env,
+		"port":        fmt.Sprintf("%d", cfg.port),
+	})
 
 	// Set metrics parameters for the debug/vars endpoint
 	setMetricsParameters()
@@ -102,6 +114,50 @@ func (app *application) serve() error {
 		Handler: app.routes(),
 	}
 
-	log.Info("Starting server on port %d", app.config.port)
+	// Construct server URL based on environment
+	serverURL := app.getServerURL()
+
+	// Log detailed server startup information
+	log.InfoWithProperties("Server starting", map[string]string{
+		"port":        fmt.Sprintf("%d", app.config.port),
+		"address":     fmt.Sprintf("0.0.0.0:%d", app.config.port),
+		"url":         serverURL,
+		"environment": app.config.env,
+	})
+
+	log.Info("Server is ready to accept connections")
+	log.Info("Health check endpoint available at: %s/healthcheck", serverURL)
+	log.Info("Metrics endpoint available at: %s/debug/vars", serverURL)
+
 	return srv.ListenAndServe()
+}
+
+// getServerURL constructs the full server URL based on the deployment environment
+func (app *application) getServerURL() string {
+	// Check for Railway public domain (Railway sets this automatically)
+	if railwayDomain := os.Getenv("RAILWAY_PUBLIC_DOMAIN"); railwayDomain != "" {
+		return fmt.Sprintf("https://%s", railwayDomain)
+	}
+
+	// Check for Railway service URL
+	if railwayServiceURL := os.Getenv("RAILWAY_STATIC_URL"); railwayServiceURL != "" {
+		return railwayServiceURL
+	}
+
+	// Check for custom domain environment variable
+	if customDomain := os.Getenv("PUBLIC_DOMAIN"); customDomain != "" {
+		scheme := "https"
+		if app.config.env == "development" {
+			scheme = "http"
+		}
+		return fmt.Sprintf("%s://%s", scheme, customDomain)
+	}
+
+	// Default to localhost for development
+	if app.config.env == "development" {
+		return fmt.Sprintf("http://localhost:%d", app.config.port)
+	}
+
+	// For production without domain info, return generic URL
+	return fmt.Sprintf("https://0.0.0.0:%d", app.config.port)
 }
