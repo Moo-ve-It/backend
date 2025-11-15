@@ -13,10 +13,17 @@ func (app *application) routes() http.Handler {
 	router := httprouter.New()
 
 	// Convert httprouter.Handler to http.Handler
-	router.HandlerFunc(http.MethodGet, "api/healthcheck", app.healthcheckHandler)
+	router.HandlerFunc(http.MethodGet, "/api/healthcheck", app.healthcheckHandler)
 
 	// Register the expvar handler for metrics
-	router.Handler(http.MethodGet, "api/debug/vars", expvar.Handler())
+	router.Handler(http.MethodGet, "/api/debug/vars", expvar.Handler())
+
+	// Farm monitoring endpoints
+	router.HandlerFunc(http.MethodGet, "/api/farm/state", app.getFarmStateHandler)
+	router.HandlerFunc(http.MethodGet, "/api/cows", app.listCowsHandler)
+	router.HandlerFunc(http.MethodGet, "/api/cows/:id", app.getCowHandler)
+	router.HandlerFunc(http.MethodGet, "/api/robodog", app.getRoboDogHandler)
+	router.HandlerFunc(http.MethodGet, "/api/drone", app.getDroneHandler)
 
 	// Create a middleware chain
 	return app.recoverPanic(app.logRequest(router))

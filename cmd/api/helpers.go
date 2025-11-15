@@ -94,6 +94,17 @@ func (app *application) serverErrorResponse(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// notFoundResponse sends a JSON-formatted 404 Not Found response to the client
+func (app *application) notFoundResponse(w http.ResponseWriter, r *http.Request) {
+	message := "The requested resource could not be found"
+	env := envelope{"error": message}
+
+	err := app.writeJSON(w, http.StatusNotFound, env, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}
+
 // For a public-facing API, the error messages themselves aren't ideal.
 // Some are too detailed and expose information about the underlying
 // API implementation. Others aren’t descriptive enough (like "EOF"),
