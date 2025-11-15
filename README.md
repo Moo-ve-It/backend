@@ -1,4 +1,4 @@
-# MooveIt Backend
+# Moo-ve-It backend
 
 A RESTful API backend for monitoring and managing a smart farm system. The backend provides endpoints to track the state of cows, a robo-dog, and a drone, all equipped with various sensors that return real-time data.
 
