@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strconv"
 	"sync"
 	"time"
 
@@ -49,8 +50,21 @@ func main() {
 func parseFlags(cfg *appConfig) {
 	// Read the command-line flags into the appConfig struct
 	// Server
-	flag.IntVar(&cfg.port, "port", 4000, "API server port")
-	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
+	// Default port is 4000, but check for PORT environment variable first (Railway requirement)
+	defaultPort := 4000
+	if portEnv := os.Getenv("PORT"); portEnv != "" {
+		if port, err := strconv.Atoi(portEnv); err == nil {
+			defaultPort = port
+		}
+	}
+	flag.IntVar(&cfg.port, "port", defaultPort, "API server port")
+
+	// Default environment is development, but check for ENV environment variable
+	defaultEnv := "development"
+	if envEnv := os.Getenv("ENV"); envEnv != "" {
+		defaultEnv = envEnv
+	}
+	flag.StringVar(&cfg.env, "env", defaultEnv, "Environment (development|staging|production)")
 
 	// Create a new version boolean flag with the default value of false.
 	displayVersion := flag.Bool("version", false, "Display version and exit")
